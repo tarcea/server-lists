@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "start": "node dist/app.js",
-    "postinstall": "tsc && mv -i -v public dist/ && rm -v -rf src",
     "watch-ts": "tsc -w",
     "dev": "nodemon src/app.ts",
     "build": "tsc -p .",
