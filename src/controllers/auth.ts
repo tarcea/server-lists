@@ -14,7 +14,6 @@ const signup = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body
     const userExists = await User.findOne({ email: email });
-    new Error('oops')
     if (userExists) {
       res.status(400).json({ message: 'this email already exists, please sign in' })
       return;

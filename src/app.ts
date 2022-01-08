@@ -18,8 +18,8 @@ const server = http.createServer(app);
 const io = new Server(server,
   {
     cors: {
-      // origin: ['http://localhost:3000'], // dev
-      origin: ['https://mycoolreminders.netlify.app'], // prod
+      origin: ['http://localhost:3000'], // dev
+      // origin: ['https://mycoolreminders.netlify.app'], // prod
     }
   }
 );

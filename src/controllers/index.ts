@@ -11,7 +11,9 @@ const getLists = async (req: Request, res: Response): Promise<void> => {
     const lists = fetchedList.filter(list => list.userId === userId)
     res.status(200).json({ lists, userId });
   } catch (error) {
-    throw error;
+    let message = 'Unknown Error'
+    if (error instanceof Error) message = error.message
+    res.status(500).json({ message })
   }
 };
 
