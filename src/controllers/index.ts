@@ -69,9 +69,7 @@ const addList = async (req: Request, res: Response): Promise<void> => {
 
 const deleteList = async (req: Request, res: Response): Promise<void> => {
   try {
-    // TODO: allow list deletion just if the todos array is empty or all todos are done
     const { listId } = req.params;
-
     await List.findOneAndDelete(
       { _id: listId }
     ).exec();

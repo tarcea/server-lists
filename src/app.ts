@@ -5,8 +5,9 @@ import mongoose from 'mongoose';
 import { Server, Socket } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import list from './models/list';
+import List from './models/list';
 import { login, signup } from './controllers/auth';
+import { IList } from './types/todo';
 
 dotenv.config();
 
@@ -18,11 +19,36 @@ const server = http.createServer(app);
 const io = new Server(server,
   {
     cors: {
-      // origin: ['http://localhost:3000'], // dev
+      // origin: ['http://localhost:3000'],
+      // methods: ["GET", "POST"]// dev
       origin: ['https://mycoolreminders.netlify.app'], // prod
     }
   }
 );
+
+io.on('connection', (socket: Socket) => {
+  console.log('connected');
+  socket.on('getTodos', async (id, room) => {
+    if (!mongoose.Types.ObjectId.isValid(id)) return false;
+    const findedList = await List.findById(id);
+    const list: IList = findedList!;
+
+    if (room === '') {
+      socket.broadcast.emit('newData', { list })
+    } else {
+      socket.to(room).emit('newData', { list })
+    }
+  });
+
+  socket.on('join-room', (room, cb) => {
+    socket.join(room);
+    cb(`joined ${room}`)
+  })
+
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+  });
+});
 
 mongoose
   .connect(DB_URI)
@@ -38,14 +64,6 @@ app.use(todoRoutes);
 app.post('/users/signup', signup);
 app.post('/users/login', login);
 
-io.on('connection', (socket: Socket) => {
-  // console.log('connected');
-  // socket.on('send-changes', data => {
-  //   socket.broadcast.emit('receive-changes', data)
-  //   console.log(data)
-  // })
-});
-
 app.get('/', (req, res) => {
   res.send('This is your reminder')
 });
@@ -53,8 +71,5 @@ app.get('/', (req, res) => {
 server.listen(PORT, () => {
   console.log(`server listening on port ${PORT}`)
 });
-// app.listen(PORT, () => {
-//   console.log(`server listening on port ${PORT}`)
-// });
 
 export default app;
