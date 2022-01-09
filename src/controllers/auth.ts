@@ -52,7 +52,7 @@ const login = async (req: Request, res: Response): Promise<void> => {
       res.status(400).json({ message: 'The details provided are not correct.' })
     }
   } catch (error) {
-    throw error;
+    throw error
   }
 };
 

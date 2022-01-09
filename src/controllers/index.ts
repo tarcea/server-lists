@@ -192,6 +192,10 @@ const updateTodo = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+const test2 = () => {
+  return "gogonel"
+};
+
 export {
   getLists,
   getListById,
@@ -202,5 +206,6 @@ export {
   toggleTodoDone,
   deleteTodo,
   deleteList,
-  updateTodo
+  updateTodo,
+  test2
 };
