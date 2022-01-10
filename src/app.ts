@@ -16,6 +16,7 @@ const DB_URI: string = process.env.DB_URI!;
 const PORT: string | number = process.env.PORT! || 3001;
 const app: Express = express();
 const server = http.createServer(app);
+
 const io = new Server(server,
   {
     cors: {
