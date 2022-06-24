@@ -6,28 +6,37 @@ import List from '../models/list';
 
 const getLists = async (req: Request, res: Response): Promise<void> => {
   try {
-    const fetchedList: IList[] = await List.find();
-    const { userId } = res.locals.decodedToken;
-    const lists = fetchedList.filter(list => list.userId === userId)
-    res.status(200).json({ lists, userId });
+    const lists: IList[] = await List.find();
+
+    res.status(200).json({ lists });
   } catch (error) {
-    let message = 'Unknown Error'
-    if (error instanceof Error) message = error.message
-    res.status(500).json({ message })
+    let message = 'Unknown Error';
+    if (error instanceof Error) message = error.message;
+    res.status(500).json({ message });
+  }
+};
+
+const updateListName = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { name } = req.body;
+
+    const { id } = req.params;
+
+    await List.findOneAndUpdate({ _id: id }, { $set: { name } });
+    res.status(200).json({
+      message: ' list name updated',
+    });
+  } catch (error) {
+    throw error;
   }
 };
 
 const getListById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { userId } = res.locals.decodedToken;
     const findedList = await List.findById(id);
     const list: IList = findedList!;
-    if (list.userId === userId) {
-      res.status(200).json({ list });
-    } else {
-      res.status(401).json({ message: 'Unauthorized' });
-    }
+    res.status(200).json({ list });
   } catch (error) {
     throw error;
   }
@@ -37,10 +46,7 @@ const toggleListDone = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const list = await List.findById(id);
-    await List.findOneAndUpdate(
-      { _id: id },
-      { $set: { done: !list?.done } }
-    );
+    await List.findOneAndUpdate({ _id: id }, { $set: { done: !list?.done } });
     res.status(200).json({});
   } catch (error) {
     throw error;
@@ -49,18 +55,17 @@ const toggleListDone = async (req: Request, res: Response): Promise<void> => {
 
 const addList = async (req: Request, res: Response): Promise<void> => {
   try {
-    const body = req.body as Pick<IList, 'name' | 'done' | 'userId'>;
-    const { name, done, userId } = body;
+    const body = req.body as Pick<IList, 'name' | 'done'>;
+    const { name, done } = body;
     const list: IList = new List({
       name,
       done,
-      userId
     });
     const newList: IList = await list.save();
 
     res.status(201).json({
       message: 'new list added',
-      list: newList
+      list: newList,
     });
   } catch (error) {
     throw error;
@@ -70,11 +75,9 @@ const addList = async (req: Request, res: Response): Promise<void> => {
 const deleteList = async (req: Request, res: Response): Promise<void> => {
   try {
     const { listId } = req.params;
-    await List.findOneAndDelete(
-      { _id: listId }
-    ).exec();
+    await List.findOneAndDelete({ _id: listId }).exec();
     res.status(200).json({
-      message: 'list deleted'
+      message: 'list deleted',
     });
   } catch (error) {
     throw error;
@@ -105,16 +108,11 @@ const addTodo = async (req: Request, res: Response): Promise<void> => {
 const getTodos = async (req: Request, res: Response): Promise<void> => {
   let todos: ITodo[];
   try {
-    const { userId } = res.locals.decodedToken;
     const { id } = req.params;
     const findedList = await List.findById(id);
-    const list: IList = findedList!
-    if (list?.userId === userId) {
-      todos = list.todos!;
-      res.status(200).json({ todos });
-    } else {
-      res.status(401).json({ message: 'Unauthorized' });
-    }
+    const list: IList = findedList!;
+    todos = list.todos!;
+    res.status(200).json({ todos });
   } catch (error) {
     throw error;
   }
@@ -128,12 +126,14 @@ const toggleTodoDone = async (req: Request, res: Response): Promise<void> => {
     const { listId } = req.params;
 
     const findedList = await List.findById(listId);
-    const list: IList = findedList!
+    const list: IList = findedList!;
     if (list) {
       todos = list.todos!;
-      const toggledTodo: ITodo = todos.find((t: ITodo) => t._id?.toString() === req.params.todoId)!;
+      const toggledTodo: ITodo = todos.find(
+        (t: ITodo) => t._id?.toString() === req.params.todoId
+      )!;
       doneFlag = toggledTodo.done!;
-    };
+    }
 
     await List.findOneAndUpdate(
       { _id: listId, 'todos._id': todoId },
@@ -155,11 +155,11 @@ const deleteTodo = async (req: Request, res: Response): Promise<void> => {
     await List.updateOne(
       { _id: listId },
       {
-        $pull: { todos: { _id: todoId } }
+        $pull: { todos: { _id: todoId } },
       }
     ).exec();
     res.status(200).json({
-      message: 'todo deleted'
+      message: 'todo deleted',
     });
   } catch (error) {
     throw error;
@@ -173,10 +173,12 @@ const updateTodo = async (req: Request, res: Response): Promise<void> => {
     const todoId = new mongoose.Types.ObjectId(req.params.todoId);
     const { listId } = req.params;
     const findedList = await List.findById(listId);
-    const list: IList = findedList!
+    const list: IList = findedList!;
     if (list) {
       todos = list.todos!;
-      updatedTodo = todos.find((t: ITodo) => t._id?.toString() === req.params.todoId)!;
+      updatedTodo = todos.find(
+        (t: ITodo) => t._id?.toString() === req.params.todoId
+      )!;
       await List.findOneAndUpdate(
         { _id: listId, 'todos._id': todoId },
         { $set: { 'todos.$': { ...updatedTodo, ...req.body } } }
@@ -185,8 +187,7 @@ const updateTodo = async (req: Request, res: Response): Promise<void> => {
         todo: { ...updatedTodo, ...req.body },
         message: 'Todo updated',
       });
-    };
-
+    }
   } catch (error) {
     throw error;
   }
@@ -196,11 +197,12 @@ export {
   getLists,
   getListById,
   toggleListDone,
+  updateListName,
   addList,
   addTodo,
   getTodos,
   toggleTodoDone,
   deleteTodo,
   deleteList,
-  updateTodo
+  updateTodo,
 };
